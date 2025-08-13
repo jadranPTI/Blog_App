@@ -28,6 +28,7 @@ class UserLoginAPIView(APIView):
 
 
 class UserCreateAPIView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         try:
             serializer = UserCreateSerializer(data=request.data)

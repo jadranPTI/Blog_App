@@ -12,24 +12,34 @@ from accounts.models import User, UserManager, BaseUserManager, AbstractBaseUser
 from .models import Blog, Comment, Like
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
 
 class BlogCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        search_query = request.query_params.get('search', None)
+        try:
+            search_query = request.query_params.get('search', None)
 
-        queryset = Blog.objects.all()
+            queryset = Blog.objects.all()
+            paginator = CustomPageNumberPagination()
 
-        if search_query:
-            queryset = queryset.filter(
-                Q(title__icontains=search_query) |
-                Q(description__icontains=search_query) |
-                Q(slug__icontains=search_query)
-            ).distinct()
+            if search_query:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query) |
+                    Q(description__icontains=search_query) |
+                    Q(slug__icontains=search_query)
+                ).distinct()
 
-        serializer = BlogSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            page = paginator.paginate_queryset(queryset, request)
+        # serializer = BlogSerializer(queryset, many=True)
+            serializer = BlogSerializer(page, many=True)
+        # return Response(serializer.data, status=status.HTTP_200_OK)
+            return paginator.get_paginated_response(serializer.data)
+        
+        except Exception as e:
+            logging.error(f"Blogs list not found: {str(e)}", exc_info=True)
+            return Response({'error': 'something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def post(self, request):
@@ -136,6 +146,25 @@ class CommentAPIView(APIView):
 class LikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        blog_name = request.query_params.get('blog_id')
+
+        if not blog_name:
+            return Response({
+                'error': "blog_id query parameter is required."
+            })
+        
+        likes = Like.objects.filter(blog_name=blog_name)
+        if not likes:
+            return Response({
+                "message": "No likes found for this blog."
+            })
+        serializer = LikeSerializer(likes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
     def post(self, request):
         blog_id = request.data.get("blog_id")
 
@@ -154,3 +183,9 @@ class LikeAPIView(APIView):
         # Otherwise, create a new like
         Like.objects.create(user_name=request.user, blog_name=blog)
         return Response({"message": "Blog liked successfully"}, status=status.HTTP_201_CREATED)
+    
+
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size=10
+    page_size_query_param='page_size'
+    max_page_size=100
