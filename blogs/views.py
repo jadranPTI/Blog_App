@@ -37,7 +37,7 @@ class BlogCreateAPIView(APIView):
         
         except Exception as e:
             # logging.error(f"Blogs list not found: {str(e)}", exc_info=True)
-            return Response({'error': 'Blogs list not found'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Blogs list not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def post(self, request):
@@ -52,7 +52,7 @@ class BlogCreateAPIView(APIView):
             )
         except Exception as e:
             # logging.error(f"Blog creation failed: {str(e)}", exc_info=True)
-            return Response({"error": "Blog creation failed. Please check the provided data"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Blog creation failed. Please check the provided data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BlogDetailAPIView(APIView):
@@ -65,7 +65,7 @@ class BlogDetailAPIView(APIView):
             # return Blog.objects.get(pk=pk)
         except Exception as e:
             # logging.error(f"Blog not found: {str(e)}", exc_info=True)
-            return Response({"error": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
         
     
     def patch(self, request, pk):
@@ -77,7 +77,7 @@ class BlogDetailAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             # logging.error(f"Blog not found: {str(e)}", exc_info=True)
-            return Response({"error": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
         
 
     def delete(self, request, pk):
@@ -88,7 +88,7 @@ class BlogDetailAPIView(APIView):
         
         except Exception as e:
             # logging.error(f"Blogs not found: {str(e)}", exc_info=True)
-            return Response({"error": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -101,7 +101,7 @@ class CommentAPIView(APIView):
 
             if not blog_name:
                 return Response(
-                    {"error": "blog_id query parameter is required."},
+                    {"message": "blog_id query parameter is required."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -118,7 +118,7 @@ class CommentAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         except Exception as e:
-            return Response({'error': 'Comments not found'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Comments not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -130,7 +130,7 @@ class CommentAPIView(APIView):
 
             if not blog_id or not comment_text:
                 return Response({
-                    "error": "Both 'blog_id' and 'content' are required."
+                    "message": "Both 'blog_id' and 'content' are required."
                 }, status=status.HTTP_400_BAD_REQUEST)
         
             blog_name = get_object_or_404(Blog, id=blog_id)
@@ -143,7 +143,7 @@ class CommentAPIView(APIView):
             return Response(CommentSerializer(comment_text).data, status=status.HTTP_201_CREATED)
         
         except Exception as e:
-            return Response({'error': "Sorry! You can't comment on this blog"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': "Sorry! You can't comment on this blog"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -157,7 +157,7 @@ class LikeAPIView(APIView):
 
             if not blog_name:
                 return Response({
-                    'error': "blog_id query parameter is required."
+                    'message': "blog_id query parameter is required."
                 })
         
             likes = Like.objects.filter(blog_name=blog_name)
@@ -169,7 +169,7 @@ class LikeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         except Exception as e:
-            return Response({'error': "No likes found of this blog"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': "No likes found of this blog"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -179,7 +179,7 @@ class LikeAPIView(APIView):
             blog_id = request.data.get("blog_id")
 
             if not blog_id:
-                return Response({"error": "blog_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "blog_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             blog = get_object_or_404(Blog, id=blog_id)
 
