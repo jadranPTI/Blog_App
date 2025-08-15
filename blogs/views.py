@@ -4,7 +4,7 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt import authentication
 from rest_framework import generics
 from .serializers import BlogSerializer, LikeSerializer, CommentSerializer
@@ -13,11 +13,15 @@ from .models import Blog, Comment, Like
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework.pagination import PageNumberPagination
+from utils.permissions import ReadOnlyOrAuthenticatedCreate
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class BlogCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [ReadOnlyOrAuthenticatedCreate]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
+        
         try:
             search_query = request.query_params.get('search', None)
 
@@ -36,11 +40,11 @@ class BlogCreateAPIView(APIView):
             return paginator.get_paginated_response(serializer.data)
         
         except Exception as e:
-            # logging.error(f"Blogs list not found: {str(e)}", exc_info=True)
             return Response({'message': 'Blogs list not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def post(self, request):
+        
         try:
             serializer = BlogSerializer(data=request.data, context={'request': request})
             serializer.is_valid(raise_exception=True)
@@ -51,7 +55,6 @@ class BlogCreateAPIView(APIView):
                 }, status=status.HTTP_201_CREATED
             )
         except Exception as e:
-            # logging.error(f"Blog creation failed: {str(e)}", exc_info=True)
             return Response({"message": "Blog creation failed. Please check the provided data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -64,7 +67,6 @@ class BlogDetailAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
             # return Blog.objects.get(pk=pk)
         except Exception as e:
-            # logging.error(f"Blog not found: {str(e)}", exc_info=True)
             return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
         
     
@@ -76,7 +78,6 @@ class BlogDetailAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            # logging.error(f"Blog not found: {str(e)}", exc_info=True)
             return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
         
 
@@ -87,7 +88,6 @@ class BlogDetailAPIView(APIView):
             return Response({"message": "Blog deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         
         except Exception as e:
-            # logging.error(f"Blogs not found: {str(e)}", exc_info=True)
             return Response({"message": "Blog not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -105,7 +105,6 @@ class CommentAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Filter comments by blog_id
             comments = Comment.objects.filter(blog_name=blog_name).order_by('-created_at')
 
             if not comments.exists():
